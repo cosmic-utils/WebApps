@@ -4,20 +4,12 @@ mod iconpicker;
 use crate::{config::AppConfig, pages::iconpicker::IconPicker, themes::Theme};
 use ashpd::desktop::file_chooser::{FileFilter, SelectedFiles};
 use cosmic::{
-    Application, Element,
-    app::{Core, Task, context_drawer},
-    command::set_theme,
-    cosmic_theme,
-    iced::{
+    Application, Element, app::{Core, Task, context_drawer}, command::set_theme, cosmic_theme, iced::{
         Alignment, Length, Subscription,
         alignment::Horizontal,
         futures::{SinkExt as _, future},
-    },
-    surface, task, theme,
-    widget::{
-        self,
-        menu::{self, ItemHeight, ItemWidth},
-        nav_bar, responsive_menu_bar,
+    }, surface, task, theme, widget::{
+        self, RcElementWrapper, button, icon, menu::{self, ItemHeight, ItemWidth}, nav_bar,
     },
 };
 use editor::AppEditor;
@@ -559,25 +551,35 @@ impl Application for QuickWebApps {
     }
 
     fn header_start(&self) -> Vec<Element<'_, Message>> {
-        vec![
-            responsive_menu_bar()
-                .item_height(ItemHeight::Dynamic(40))
-                .item_width(ItemWidth::Uniform(240))
-                .spacing(4.0)
-                .into_element(
-                    &self.core,
-                    &self.key_binds,
-                    MENU_ID.clone(),
-                    Message::Surface,
-                    vec![(
-                        fl!("help"),
-                        vec![
-                            menu::Item::Button(fl!("settings"), None, MenuAction::Settings),
-                            menu::Item::Button(fl!("about"), None, MenuAction::About),
-                        ],
-                    )],
-                ),
-        ]
+        let menu_bar = menu::bar(vec![menu::Tree::with_children(
+            RcElementWrapper::new(
+                button::icon(icon::from_name("open-menu-symbolic"))
+                    .padding([4, 12])
+                    .class(theme::Button::MenuRoot)
+                    .into(),
+            ),
+            menu::items(
+                &self.key_binds,
+                vec![
+                    menu::Item::Button(
+                        fl!("menu-settings"),
+                        None,
+                        MenuAction::Settings
+                    ),
+                    menu::Item::Divider,
+                    menu::Item::Button(
+                        fl!("menu-about"),
+                        None,
+                        MenuAction::About
+                    ),
+                ],
+            ),
+        )])
+        .item_height(ItemHeight::Dynamic(40))
+        .item_width(ItemWidth::Uniform(320))
+        .spacing(4.0);
+
+        vec![menu_bar.into()]
     }
 
     fn nav_bar(&self) -> Option<Element<'_, cosmic::Action<Message>>> {
